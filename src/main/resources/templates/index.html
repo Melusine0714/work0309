@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>主页</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+          integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous"/>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <style>
+        .row{
+            display: flex;
+            justify-content: center;
+        }
+        .container{
+            text-align: center;
+        }
+        form{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid" id="app" style="margin-top: 180px;margin-bottom: 100px">
+
+    <div class="container col-md-12">
+        <h3>学生列表</h3>
+        <button @click="showAddStudent">新增学生</button>
+    </div>
+    <div v-if="pageData.total<1">
+        <h2>暂无学生信息</h2>
+    </div>
+
+    <div class="container" v-if="pageData.total>0">
+
+        <div class="row">
+            <div class="col-sm-6 col-md-4" v-for="student in pageData.records">
+                <div class="thumbnail">
+                    <div class="caption text-left">
+                        <p>id:<span v-text="student.id">id</span></p>
+                        <p>姓名:<span v-text="student.name">name</span></p>
+                        <p>年龄:<span v-text="student.age">age</span></p>
+                        <p>tel:<span v-text="student.tel">age</span></p>
+                        <p>地址:<span v-text="student.address">age</span></p>
+                        <p>
+                            <a class="btn btn-success" @click.prevent="updateStudent(student.id)">编辑</a>
+                            <a class="btn btn-success" @click.prevent="deleteStudent(student.id)">删除</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="">
+                <ul class="pagination justify-content-center">
+                    <li><a href="" @click.prevent="goPage(pageData.current-1)">上一页</a></li>
+                    <li><a href="" v-for="pageNum in pageData.pages" v-text="pageNum"
+                           @click.prevent="goPage(pageNum)">n</a></li>
+                    <li><a href="" @click.prevent="goPage(pageData.current+1)">下一页</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <form v-if="display">
+        <span v-if="displayMode=='update'"></span><br/>
+        name: <input v-model="name" type="text"/> <br/>
+        age: <input v-model="age" type="number"/> <br/>
+        tel: <input v-model="tel" type="text"/> <br/>
+        address : <input v-model="address" type="text"/> <br/>
+        <button v-if="displayMode=='add'" @click.prevent="submitAdd">新增</button>
+        <button v-if="displayMode=='update'" @click.prevent="submitUpdate">修改</button>
+    </form>
+</div>
+
+<script>
+    let app = new Vue({
+        el: "#app",  //绑定元素
+        data: {  //vue使用的所有属性,都是kv形式的
+            // -----k:v 或者 k:{json對象} 或者k:[數組]
+            display: false,
+            displayMode: '',
+            id: 0,
+            name: '',
+            age: 0,
+            tel: '',
+            address: '',
+
+            pageData: {
+                current: 1,
+                size: 3,
+                total: -1,
+                records: [],//數組
+                pages: -1
+            }
+
+        },
+        methods: {  //方法
+            //寫法:  方法名(){對參數的修改等操作}
+            showAddStudent() {
+                this.display = true;//將display設置為true
+                this.displayMode = "add" //給displayMode賦值add
+            },
+            submitAdd() {
+                //搜集表单数据
+                let params = {
+                    name: this.name,
+                    age: this.age,
+                    tel: this.tel,
+                    address: this.address
+                }
+                console.log(params)
+                let vueObj = this;
+                $.post("/students/add", params, function (data) {
+                    alert("添加成功")
+                    window.location.reload()
+                    this.display = false;
+
+                    //清空表单数据
+                    vueObj.id = 0
+                    vueObj.name = ''
+                    vueObj.age = 0
+                    vueObj.tel = ''
+                    vueObj.address = ''
+                })
+            },
+            submitUpdate() {
+                //搜集表单数据
+                this.display = true;
+                this.displayMode = "update"
+
+                let args = {
+                    id: this.id,
+                    name: this.name,
+                    age: this.age,
+                    tel: this.tel,
+                    address: this.address
+                }
+                console.log(args)
+                let vueObj = this;
+                $.post("/students/update", args, function (data) {
+                    alert("修改成功")
+                    window.location.reload()
+                    vueObj.display = false;
+                    //清空表单数据
+                    vueObj.id = 0
+                    vueObj.name = ''
+                    vueObj.age = 0
+                    vueObj.tel = ''
+                    vueObj.address = ''
+                })
+            },
+            showUpdate() {
+                this.display = true;
+                this.displayMode = "update"
+            },
+            deleteStudent(id) {
+                //搜集表单数据
+                let params = {
+                    id: id,
+                    name: this.name,
+                    age: this.age,
+                    tel: this.tel,
+                    address: this.address
+                }
+                console.log(params)
+                let vueObj = this;
+                $.post("/students/delete", params, function (data) {
+                    alert("刪除成功")
+                    window.location.reload()
+                    this.display = false;
+
+                    //清空表单数据
+                    vueObj.id = 0
+                    vueObj.name = ''
+                    vueObj.age = 0
+                    vueObj.tel = ''
+                    vueObj.address = ''
+                })
+            },
+            updateStudent(id) {
+                this.display = true;
+                this.displayMode = "update"
+                this.id = id;
+            },
+            showPageInfo() {
+                //設置分頁的頁碼和每頁顯示的個數
+                let args = {
+                    current: this.pageData.current,
+                    size: this.pageData.size,
+                }
+                let vueObj = this;
+                $.post("/students/select", args, function (data) {
+                    vueObj.pageData = data;
+                })
+            },
+            goPage(pageNum) {
+                if (pageNum < 1 || pageNum > this.pageData.pages || pageNum === this.pageData.current) {
+                    console.log("无效PageNum  " + pageNum)
+                    return
+                }
+
+                this.pageData.current = pageNum;
+                this.showPageInfo()
+            }
+        },
+        created() {
+            //生命周期中的方法,在vue对象创建完成时调用(頁面一加載就調用created方法)
+            this.showPageInfo();//只要頁面一打開 就會觸發showPageInfo()
+        }
+    })
+</script>
+
+</body>
+</html>
